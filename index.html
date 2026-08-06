@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#090d18" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Привычки" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Привычки</title>
+  <style>
+    :root{
+      --bg:#070b14;
+      --panel:#101726;
+      --panel2:#151e31;
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --line:#243047;
+      --green:#22c55e;
+      --blue:#38bdf8;
+      --orange:#fb923c;
+      --red:#ef4444;
+      --yellow:#facc15;
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at top left,rgba(56,189,248,.08),transparent 32%),
+        radial-gradient(circle at top right,rgba(34,197,94,.06),transparent 24%),
+        var(--bg);
+    }
+    button,select{font:inherit}
+    .app{
+      width:min(760px,100%);
+      margin:0 auto;
+      padding:max(22px,env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+    }
+    .top{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px
+    }
+    h1{margin:0;font-size:40px;line-height:1;letter-spacing:-.05em}
+    .date{margin-top:7px;color:var(--muted);font-size:14px}
+    .badge{
+      border:1px solid var(--line);background:rgba(16,23,38,.82);padding:9px 12px;
+      border-radius:999px;font-size:13px;font-weight:800
+    }
+    .hero{
+      border:1px solid var(--line);
+      background:linear-gradient(135deg,#101726,#1b2740);
+      box-shadow:var(--shadow);
+      border-radius:26px;padding:20px;margin-bottom:14px
+    }
+    .hero-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+    .kicker{font-size:13px;color:var(--muted)}
+    .score{font-size:50px;font-weight:900;letter-spacing:-.06em;line-height:1;margin-top:4px}
+    .status{text-align:right;font-size:14px;font-weight:800}
+    .progress{height:12px;background:#243047;border-radius:999px;overflow:hidden;margin-top:17px}
+    .progress>div{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .25s}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .stat,.card,.habit,.tracker{
+      background:rgba(16,23,38,.92);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+    .stat{border-radius:18px;padding:14px}
+    .stat-label{font-size:12px;color:var(--muted)}
+    .stat-value{margin-top:5px;font-size:24px;font-weight:900}
+    .section-head{
+      display:flex;justify-content:space-between;align-items:center;gap:10px;
+      margin:20px 2px 10px
+    }
+    .section-head h2{margin:0;font-size:20px}
+    .section-note{font-size:12px;color:var(--muted)}
+    .habit-list{display:grid;gap:10px}
+    .habit{
+      border-radius:18px;padding:14px;
+      display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center
+    }
+    .habit.done{border-color:rgba(34,197,94,.55);background:rgba(16,46,31,.92)}
+    .habit-name{font-weight:850;font-size:16px}
+    .habit-meta{margin-top:4px;color:var(--muted);font-size:12px}
+    .habit-actions{display:flex;align-items:center;gap:8px}
+    .streak{font-size:12px;color:var(--muted);font-weight:800}
+    .check{
+      width:48px;height:48px;border:0;border-radius:15px;background:#1c2941;color:white;
+      font-size:22px;font-weight:900
+    }
+    .habit.done .check{background:var(--green)}
+    .trackers{display:grid;gap:12px}
+    .tracker{border-radius:22px;padding:16px}
+    .tracker-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .tracker-title{font-size:18px;font-weight:900}
+    .tracker-value{font-size:24px;font-weight:900;margin-top:4px}
+    .tracker-sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .tracker-progress{height:12px;border-radius:999px;background:#243047;overflow:hidden;margin:14px 0}
+    .tracker-progress>div{height:100%;width:0;border-radius:inherit;transition:width .25s}
+    .water-fill{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}
+    .caffeine-fill{background:linear-gradient(90deg,#f59e0b,#fb923c)}
+    .caffeine-fill.over{background:linear-gradient(90deg,#ef4444,#b91c1c)}
+    .quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .quick-grid.caffeine{grid-template-columns:repeat(3,1fr)}
+    .quick-btn{
+      border:1px solid var(--line);background:#172238;color:var(--text);border-radius:13px;
+      padding:12px 8px;font-weight:850
+    }
+    .quick-btn:active{transform:scale(.98)}
+    .tracker-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .small-btn{
+      border:0;background:transparent;color:var(--muted);padding:6px 0;font-size:12px
+    }
+    .ok{color:var(--green);font-weight:800}
+    .warn{color:var(--orange);font-weight:800}
+    .over{color:var(--red);font-weight:800}
+    .card{border-radius:20px;padding:16px;margin-bottom:14px}
+    .calendar-head,.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
+    .calendar-head{font-size:11px;color:var(--muted);text-align:center;margin-bottom:7px}
+    .day{
+      aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:850;background:#1a2437;color:#64748b
+    }
+    .day.green{background:#123b25;color:#86efac}
+    .day.yellow{background:#453a12;color:#fde68a}
+    .day.red{background:#3a1820;color:#fca5a5}
+    .day.future{opacity:.28}
+    .day.today{outline:2px solid var(--blue);outline-offset:2px}
+    .chart{height:170px;display:flex;align-items:flex-end;gap:10px;padding-top:12px}
+    .bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px}
+    .bar{width:100%;max-width:44px;min-height:4px;background:linear-gradient(180deg,var(--blue),#2563eb);border-radius:10px 10px 5px 5px}
+    .bar-label,.bar-value{font-size:11px}
+    .bar-label{color:var(--muted)}
+    .bar-value{font-weight:800}
+    .settings-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    select{background:#172238;color:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+    .hint{color:var(--muted);font-size:12px;line-height:1.45;margin-top:10px}
+    @media(max-width:560px){
+      .stats{grid-template-columns:1fr}
+      .stat{display:flex;justify-content:space-between;align-items:center}
+      .stat-value{margin:0;font-size:21px}
+      .habit{grid-template-columns:1fr}
+      .habit-actions{justify-content:space-between}
+      .quick-grid{grid-template-columns:repeat(2,1fr)}
+      .quick-grid.caffeine{grid-template-columns:repeat(3,1fr)}
+    }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div>
+      <h1>Привычки</h1>
+      <div class="date" id="todayDate"></div>
+    </div>
+    <div class="badge" id="dayBadge">0 / 8</div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-row">
+      <div>
+        <div class="kicker">Очки сегодня</div>
+        <div class="score"><span id="score">0</span><small style="font-size:18px"> / 100</small></div>
+      </div>
+      <div class="status" id="dayStatus">Начни с одной привычки</div>
+    </div>
+    <div class="progress"><div id="progressBar"></div></div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-label">Общая серия</div><div class="stat-value"><span id="overallStreak">0</span> дн.</div></div>
+    <div class="stat"><div class="stat-label">Успешных дней за 30</div><div class="stat-value" id="success30">0</div></div>
+    <div class="stat"><div class="stat-label">Среднее за 7 дней</div><div class="stat-value"><span id="avg7">0</span>%</div></div>
+  </section>
+
+  <div class="section-head"><h2>Сегодня</h2><span class="section-note">Отмечай по факту</span></div>
+  <section class="habit-list" id="habitList"></section>
+
+  <div class="section-head"><h2>Вода и кофеин</h2><span class="section-note">Счётчики за сегодня</span></div>
+  <section class="trackers">
+    <article class="tracker">
+      <div class="tracker-top">
+        <div>
+          <div class="tracker-title">💧 Вода</div>
+          <div class="tracker-value"><span id="waterValue">0</span> / 3000 мл</div>
+          <div class="tracker-sub">Цель закрывается автоматически</div>
+        </div>
+        <div id="waterStatus" class="warn">0%</div>
+      </div>
+      <div class="tracker-progress"><div id="waterBar" class="water-fill"></div></div>
+      <div class="quick-grid">
+        <button class="quick-btn" data-water="700">+700</button>
+        <button class="quick-btn" data-water="500">+500</button>
+        <button class="quick-btn" data-water="400">+400</button>
+        <button class="quick-btn" data-water="300">+300</button>
+      </div>
+      <div class="tracker-footer">
+        <span class="tracker-sub">Можно превысить 3 литра</span>
+        <button class="small-btn" id="resetWater">Сбросить воду</button>
+      </div>
+    </article>
+
+    <article class="tracker">
+      <div class="tracker-top">
+        <div>
+          <div class="tracker-title">☕ Кофеин</div>
+          <div class="tracker-value"><span id="caffeineValue">0</span> / 400 мг</div>
+          <div class="tracker-sub">Лимит на день</div>
+        </div>
+        <div id="caffeineStatus" class="ok">В норме</div>
+      </div>
+      <div class="tracker-progress"><div id="caffeineBar" class="caffeine-fill"></div></div>
+      <div class="quick-grid caffeine">
+        <button class="quick-btn" data-caffeine="80">+80</button>
+        <button class="quick-btn" data-caffeine="100">+100</button>
+        <button class="quick-btn" data-caffeine="150">+150</button>
+      </div>
+      <div class="tracker-footer">
+        <span class="tracker-sub">После 400 мг индикатор красный</span>
+        <button class="small-btn" id="resetCaffeine">Сбросить кофеин</button>
+      </div>
+    </article>
+  </section>
+
+  <div class="section-head"><h2>Календарь</h2><span class="section-note">Последние 35 дней</span></div>
+  <section class="card">
+    <div class="calendar-head"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+    <div class="calendar" id="calendar"></div>
+    <div class="hint">Зелёный — успешный день. Жёлтый — частично выполнен. Красный — ничего.</div>
+  </section>
+
+  <div class="section-head"><h2>Неделя</h2><span class="section-note">Процент выполнения</span></div>
+  <section class="card"><div class="chart" id="weekChart"></div></section>
+
+  <div class="section-head"><h2>Настройки</h2></div>
+  <section class="card">
+    <div class="settings-row">
+      <div>
+        <strong>Успешный день</strong>
+        <div class="hint" style="margin-top:3px">Сколько целей нужно закрыть</div>
+      </div>
+      <select id="successTarget"></select>
+    </div>
+  </section>
+</main>
+
+<script>
+const STORAGE_KEY="egor-habbits-v2";
+const habits=[
+  {id:"english",name:"Английский — 10 мин",points:14},
+  {id:"chess",name:"Шахматы — 10 мин",points:14},
+  {id:"journal",name:"Дневник",points:14},
+  {id:"abstinence",name:"Воздержание",points:14},
+  {id:"book",name:"Книга — 20 мин",points:14},
+  {id:"video",name:"Обучающее видео — 15 мин",points:14}
+];
+const WATER_GOAL=3000;
+const CAFFEINE_LIMIT=400;
+const TOTAL_GOALS=8;
+const defaultState={days:{},successTarget:7};
+
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    return raw?Object.assign(clone(defaultState),JSON.parse(raw)):clone(defaultState);
+  }catch(e){return clone(defaultState)}
+}
+let state=loadState();
+function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function dateKey(d=new Date()){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")
+}
+function ensureDay(key=dateKey()){
+  if(!state.days[key]) state.days[key]={habits:{},water:0,caffeine:0};
+  if(!state.days[key].habits) state.days[key].habits={};
+  if(typeof state.days[key].water!=="number") state.days[key].water=0;
+  if(typeof state.days[key].caffeine!=="number") state.days[key].caffeine=0;
+  return state.days[key]
+}
+function goalCount(key){
+  const d=ensureDay(key);
+  const checked=habits.filter(h=>d.habits[h.id]).length;
+  const water=d.water>=WATER_GOAL?1:0;
+  const caffeine=d.caffeine<=CAFFEINE_LIMIT?1:0;
+  return checked+water+caffeine
+}
+function score(key){
+  const d=ensureDay(key);
+  let s=habits.reduce((sum,h)=>sum+(d.habits[h.id]?h.points:0),0);
+  s+=Math.min(10,Math.round(d.water/WATER_GOAL*10));
+  s+=d.caffeine<=CAFFEINE_LIMIT?6:0;
+  return Math.min(100,s)
+}
+function percent(key){return Math.round(goalCount(key)/TOTAL_GOALS*100)}
+function successful(key){return goalCount(key)>=state.successTarget}
+function habitStreak(id){
+  let s=0,d=new Date();
+  while(ensureDay(dateKey(d)).habits[id]){s++;d.setDate(d.getDate()-1)}
+  return s
+}
+function overallStreak(){
+  let s=0,d=new Date();
+  while(successful(dateKey(d))){s++;d.setDate(d.getDate()-1)}
+  return s
+}
+function render(){
+  const key=dateKey(),d=ensureDay(key),count=goalCount(key),pct=percent(key),sc=score(key);
+
+  document.getElementById("todayDate").textContent=new Intl.DateTimeFormat("ru-RU",{weekday:"long",day:"numeric",month:"long"}).format(new Date());
+  document.getElementById("dayBadge").textContent=count+" / "+TOTAL_GOALS;
+  document.getElementById("score").textContent=sc;
+  document.getElementById("progressBar").style.width=pct+"%";
+  document.getElementById("overallStreak").textContent=overallStreak();
+  document.getElementById("dayStatus").textContent=
+    count===TOTAL_GOALS?"Идеальный день":
+    successful(key)?"День уже успешный":
+    count>=5?"Хороший темп":
+    count>=1?"Продолжай":"Начни с одной привычки";
+
+  document.getElementById("habitList").innerHTML=habits.map(h=>{
+    const done=!!d.habits[h.id],streak=habitStreak(h.id);
+    return `<article class="habit ${done?"done":""}">
+      <div>
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-meta">${h.points} очков · серия ${streak} дн.</div>
+      </div>
+      <div class="habit-actions">
+        <div class="streak">🔥 ${streak}</div>
+        <button class="check" data-id="${h.id}">${done?"✓":"○"}</button>
+      </div>
+    </article>`
+  }).join("");
+
+  document.getElementById("waterValue").textContent=d.water;
+  const waterPct=Math.min(100,Math.round(d.water/WATER_GOAL*100));
+  document.getElementById("waterBar").style.width=waterPct+"%";
+  const ws=document.getElementById("waterStatus");
+  ws.textContent=d.water>=WATER_GOAL?"Цель закрыта":waterPct+"%";
+  ws.className=d.water>=WATER_GOAL?"ok":"warn";
+
+  document.getElementById("caffeineValue").textContent=d.caffeine;
+  const caffeinePct=Math.min(100,Math.round(d.caffeine/CAFFEINE_LIMIT*100));
+  const cb=document.getElementById("caffeineBar");
+  cb.style.width=caffeinePct+"%";
+  cb.className=d.caffeine>CAFFEINE_LIMIT?"caffeine-fill over":"caffeine-fill";
+  const cs=document.getElementById("caffeineStatus");
+  if(d.caffeine>CAFFEINE_LIMIT){
+    cs.textContent="Перебор +"+(d.caffeine-CAFFEINE_LIMIT);
+    cs.className="over";
+  }else if(d.caffeine>=320){
+    cs.textContent="Близко к лимиту";
+    cs.className="warn";
+  }else{
+    cs.textContent="В норме";
+    cs.className="ok";
+  }
+
+  let success30=0,total7=0;
+  for(let i=0;i<30;i++){
+    const x=new Date();x.setDate(x.getDate()-i);
+    if(successful(dateKey(x)))success30++;
+    if(i<7)total7+=percent(dateKey(x))
+  }
+  document.getElementById("success30").textContent=success30;
+  document.getElementById("avg7").textContent=Math.round(total7/7);
+
+  const cal=document.getElementById("calendar"),today=new Date(),start=new Date();
+  start.setDate(today.getDate()-34);
+  start.setDate(start.getDate()-((start.getDay()+6)%7));
+  let cells="";
+  for(let i=0;i<42;i++){
+    const x=new Date(start);x.setDate(start.getDate()+i);
+    const k=dateKey(x),future=x>today,c=goalCount(k);
+    let cls=future?"future":successful(k)?"green":c>0?"yellow":"red";
+    if(k===dateKey())cls+=" today";
+    cells+=`<div class="day ${cls}">${x.getDate()}</div>`
+  }
+  cal.innerHTML=cells;
+
+  const labels=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],now=new Date(),dow=now.getDay()||7,mon=new Date(now);
+  mon.setDate(now.getDate()-dow+1);
+  document.getElementById("weekChart").innerHTML=labels.map((label,i)=>{
+    const x=new Date(mon);x.setDate(mon.getDate()+i);
+    const p=x>now?0:percent(dateKey(x));
+    return `<div class="bar-wrap"><div class="bar-value">${p}%</div><div class="bar" style="height:${Math.max(4,p)}%"></div><div class="bar-label">${label}</div></div>`
+  }).join("");
+
+  document.getElementById("successTarget").innerHTML=Array.from({length:TOTAL_GOALS},(_,i)=>{
+    const v=i+1;
+    return `<option value="${v}" ${v===state.successTarget?"selected":""}>${v} из ${TOTAL_GOALS}</option>`
+  }).join("");
+
+  save()
+}
+document.getElementById("habitList").addEventListener("click",e=>{
+  const b=e.target.closest("[data-id]");if(!b)return;
+  const d=ensureDay();d.habits[b.dataset.id]=!d.habits[b.dataset.id];render()
+});
+document.querySelectorAll("[data-water]").forEach(b=>b.addEventListener("click",()=>{
+  ensureDay().water+=Number(b.dataset.water);render()
+}));
+document.querySelectorAll("[data-caffeine]").forEach(b=>b.addEventListener("click",()=>{
+  ensureDay().caffeine+=Number(b.dataset.caffeine);render()
+}));
+document.getElementById("resetWater").addEventListener("click",()=>{ensureDay().water=0;render()});
+document.getElementById("resetCaffeine").addEventListener("click",()=>{ensureDay().caffeine=0;render()});
+document.getElementById("successTarget").addEventListener("change",e=>{state.successTarget=Number(e.target.value);render()});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"))
+}
+render();
+</script>
+</body>
+</html>
