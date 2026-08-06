@@ -1,1 +1,8 @@
-
+{
+  "name": "Habbits",
+  "short_name": "Habbits",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#070b14"
+}
