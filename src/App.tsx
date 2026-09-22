@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DailyOverview } from './components/DailyOverview'
+import { NutritionEditor } from './components/NutritionEditor'
 import {
   createDailyRecord,
   createHabbitsData,
@@ -89,6 +90,7 @@ function Ring({
 export default function App() {
   const [state, setState] = useState<HabbitsData>(loadHabbitsData)
   const [tab, setTab] = useState<Tab>('today')
+  const [editingNutrition, setEditingNutrition] = useState(false)
 
   const tk = dkey()
   const today = state.days[tk] ?? createDailyRecord(tk)
@@ -232,7 +234,34 @@ export default function App() {
           </section>
 
           <h2 className="sectionTitle">Сводка дня</h2>
-          <DailyOverview day={today} />
+          <DailyOverview
+            day={today}
+            onEditNutrition={() => setEditingNutrition(true)}
+          />
+
+          {editingNutrition && (
+            <NutritionEditor
+              initial={today.nutrition}
+              onCancel={() => setEditingNutrition(false)}
+              onClear={() => {
+                update((day) => ({ ...day, nutrition: undefined }))
+                setEditingNutrition(false)
+              }}
+              onSave={(nutrition) => {
+                update((day) => ({
+                  ...day,
+                  nutrition: {
+                    ...nutrition,
+                    source: {
+                      provider: 'manual',
+                      syncedAt: new Date().toISOString(),
+                    },
+                  },
+                }))
+                setEditingNutrition(false)
+              }}
+            />
+          )}
 
           <h2 className="sectionTitle">Привычки</h2>
 

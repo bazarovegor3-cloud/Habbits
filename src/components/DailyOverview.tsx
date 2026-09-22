@@ -6,7 +6,13 @@ const formatDuration = (minutes: number) => {
   return `${hours} ч ${rest} мин`
 }
 
-export function DailyOverview({ day }: { day: DailyRecord }) {
+export function DailyOverview({
+  day,
+  onEditNutrition,
+}: {
+  day: DailyRecord
+  onEditNutrition: () => void
+}) {
   const nutritionValue = day.nutrition?.caloriesKcal
     ? `${Math.round(day.nutrition.caloriesKcal)} ккал`
     : 'Нет данных'
@@ -40,8 +46,9 @@ export function DailyOverview({ day }: { day: DailyRecord }) {
       icon: '🍽️',
       title: 'Питание',
       value: nutritionValue,
-      detail: nutritionDetail || 'FatSecret',
+      detail: nutritionDetail || 'Заполнить вручную',
       ready: Boolean(day.nutrition),
+      onClick: onEditNutrition,
     },
     {
       icon: '🌙',
@@ -52,6 +59,7 @@ export function DailyOverview({ day }: { day: DailyRecord }) {
           ? `Готовность ${day.sleep.readiness}`
           : 'Health / Fitbit',
       ready: Boolean(day.sleep),
+      onClick: undefined,
     },
     {
       icon: '⚡',
@@ -61,22 +69,40 @@ export function DailyOverview({ day }: { day: DailyRecord }) {
         ? `${Math.round(day.activity.activeCaloriesKcal)} активных ккал`
         : 'Health / Fitbit',
       ready: Boolean(day.activity),
+      onClick: undefined,
     },
   ]
 
   return (
     <section className="dailyOverview" aria-label="Сводка дня">
-      {cards.map((card) => (
-        <article
-          className={`summaryCard ${card.ready ? 'hasData' : ''}`}
-          key={card.title}
-        >
-          <span className="summaryIcon">{card.icon}</span>
-          <small>{card.title}</small>
-          <b>{card.value}</b>
-          <em>{card.detail}</em>
-        </article>
-      ))}
+      {cards.map((card) => {
+        const content = (
+          <>
+            <span className="summaryIcon">{card.icon}</span>
+            <small>{card.title}</small>
+            <b>{card.value}</b>
+            <em>{card.detail}</em>
+          </>
+        )
+
+        return card.onClick ? (
+          <button
+            className={`summaryCard editable ${card.ready ? 'hasData' : ''}`}
+            key={card.title}
+            type="button"
+            onClick={card.onClick}
+          >
+            {content}
+          </button>
+        ) : (
+          <article
+            className={`summaryCard ${card.ready ? 'hasData' : ''}`}
+            key={card.title}
+          >
+            {content}
+          </article>
+        )
+      })}
     </section>
   )
 }
