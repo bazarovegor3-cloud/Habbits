@@ -458,13 +458,24 @@ button {
   color: var(--muted);
 }
 
+.backup,
 .danger {
   width: 100%;
   padding: 13px;
+  border-radius: 14px;
+}
+
+.backup {
+  margin-bottom: 10px;
+  color: #bae6fd;
+  background: #123047;
+  border: 1px solid #1d6087;
+}
+
+.danger {
   color: #fca5a5;
   background: #3f151a;
   border: 1px solid #7f1d1d;
-  border-radius: 14px;
 }
 
 nav {

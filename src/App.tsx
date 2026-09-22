@@ -1,18 +1,19 @@
-import { useMemo, useState } from 'react'
-
-type Day = {
-  habits: Record<string, boolean>
-  water: number
-  caffeine: number
-}
-
-type State = {
-  days: Record<string, Day>
-}
+import { useEffect, useMemo, useState } from 'react'
+import {
+  createDailyRecord,
+  createHabbitsData,
+  type DailyRecord,
+  type HabbitsData,
+} from './domain/dailyRecord'
+import {
+  clearHabbitsData,
+  loadHabbitsData,
+  saveHabbitsData,
+  serializeBackup,
+} from './storage/habbitsStorage'
 
 type Tab = 'today' | 'calendar' | 'stats' | 'settings'
 
-const KEY = 'habbits-react-v2'
 const WATER = 3000
 const CAFFEINE = 400
 const TARGET = 6
@@ -26,25 +27,10 @@ const habits = [
   { id: 'video', name: 'Обучающее видео', sub: '15 минут', icon: '▶', points: 14 },
 ]
 
-const empty = (): Day => ({
-  habits: {},
-  water: 0,
-  caffeine: 0,
-})
-
 const dkey = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
     d.getDate(),
   ).padStart(2, '0')}`
-
-function load(): State {
-  try {
-    const x = localStorage.getItem(KEY)
-    return x ? JSON.parse(x) : { days: {} }
-  } catch {
-    return { days: {} }
-  }
-}
 
 function Ring({
   value,
@@ -100,32 +86,38 @@ function Ring({
 }
 
 export default function App() {
-  const [state, setState] = useState<State>(load)
+  const [state, setState] = useState<HabbitsData>(loadHabbitsData)
   const [tab, setTab] = useState<Tab>('today')
 
   const tk = dkey()
-  const today = state.days[tk] ?? empty()
+  const today = state.days[tk] ?? createDailyRecord(tk)
 
-  const update = (fn: (d: Day) => Day) =>
+  useEffect(() => {
+    saveHabbitsData(state)
+  }, [state])
+
+  const update = (fn: (d: DailyRecord) => DailyRecord) =>
     setState((previous) => {
       const next = {
         ...previous,
         days: {
           ...previous.days,
-          [tk]: fn(previous.days[tk] ?? empty()),
+          [tk]: {
+            ...fn(previous.days[tk] ?? createDailyRecord(tk)),
+            date: tk,
+            updatedAt: new Date().toISOString(),
+          },
         },
       }
-
-      localStorage.setItem(KEY, JSON.stringify(next))
       return next
     })
 
   const stats = (key: string) => {
-    const day = state.days[key] ?? empty()
+    const day = state.days[key] ?? createDailyRecord(key)
     const doneHabits = habits.filter((habit) => day.habits[habit.id]).length
 
     return {
-      done: doneHabits + (day.water >= WATER ? 1 : 0),
+      done: doneHabits + (day.hydration.waterMl >= WATER ? 1 : 0),
       total: habits.length + 1,
     }
   }
@@ -137,7 +129,8 @@ export default function App() {
     habits.reduce(
       (sum, habit) => sum + (today.habits[habit.id] ? habit.points : 0),
       0,
-    ) + Math.min(10, Math.round((today.water / WATER) * 10)),
+    ) +
+      Math.min(10, Math.round((today.hydration.waterMl / WATER) * 10)),
   )
 
   const streak = useMemo(() => {
@@ -156,7 +149,9 @@ export default function App() {
     let current = 0
     const date = new Date()
 
-    while ((state.days[dkey(date)] ?? empty()).habits[id]) {
+    while (
+      (state.days[dkey(date)] ?? createDailyRecord(dkey(date))).habits[id]
+    ) {
       current++
       date.setDate(date.getDate() - 1)
     }
@@ -283,7 +278,7 @@ export default function App() {
               <h2>💧 Вода</h2>
 
               <Ring
-                value={today.water}
+                value={today.hydration.waterMl}
                 max={WATER}
                 label="/ 3000 мл"
                 type="water"
@@ -297,7 +292,10 @@ export default function App() {
                     onClick={() =>
                       update((day) => ({
                         ...day,
-                        water: day.water + value,
+                        hydration: {
+                          ...day.hydration,
+                          waterMl: day.hydration.waterMl + value,
+                        },
                       }))
                     }
                   >
@@ -311,7 +309,10 @@ export default function App() {
                 onClick={() =>
                   update((day) => ({
                     ...day,
-                    water: 0,
+                    hydration: {
+                      ...day.hydration,
+                      waterMl: 0,
+                    },
                   }))
                 }
               >
@@ -323,7 +324,7 @@ export default function App() {
               <h2>☕ Кофеин</h2>
 
               <Ring
-                value={today.caffeine}
+                value={today.stimulants.caffeineMg}
                 max={CAFFEINE}
                 label="/ 400 мг"
                 type="caffeine"
@@ -337,7 +338,10 @@ export default function App() {
                     onClick={() =>
                       update((day) => ({
                         ...day,
-                        caffeine: day.caffeine + value,
+                        stimulants: {
+                          ...day.stimulants,
+                          caffeineMg: day.stimulants.caffeineMg + value,
+                        },
                       }))
                     }
                   >
@@ -351,7 +355,10 @@ export default function App() {
                 onClick={() =>
                   update((day) => ({
                     ...day,
-                    caffeine: 0,
+                    stimulants: {
+                      ...day.stimulants,
+                      caffeineMg: 0,
+                    },
                   }))
                 }
               >
@@ -396,13 +403,13 @@ export default function App() {
 
             <div>
               <span>Вода</span>
-              <b>{today.water}</b>
+              <b>{today.hydration.waterMl}</b>
               <small>мл</small>
             </div>
 
             <div>
               <span>Кофеин</span>
-              <b>{today.caffeine}</b>
+              <b>{today.stimulants.caffeineMg}</b>
               <small>мг</small>
             </div>
 
@@ -443,11 +450,30 @@ export default function App() {
           <p>Данные сохраняются на этом устройстве.</p>
 
           <button
+            className="backup"
+            onClick={() => {
+              const blob = new Blob([serializeBackup(state)], {
+                type: 'application/json',
+              })
+              const url = URL.createObjectURL(blob)
+              const link = document.createElement('a')
+              link.href = url
+              link.download = `habbits-backup-${tk}.json`
+              document.body.appendChild(link)
+              link.click()
+              link.remove()
+              window.setTimeout(() => URL.revokeObjectURL(url), 0)
+            }}
+          >
+            Скачать резервную копию
+          </button>
+
+          <button
             className="danger"
             onClick={() => {
               if (confirm('Удалить всю историю?')) {
-                localStorage.removeItem(KEY)
-                setState({ days: {} })
+                clearHabbitsData()
+                setState(createHabbitsData())
               }
             }}
           >
