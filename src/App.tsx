@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { DailyOverview } from './components/DailyOverview'
 import {
   createDailyRecord,
   createHabbitsData,
   type DailyRecord,
   type HabbitsData,
 } from './domain/dailyRecord'
+import { getDayMetrics } from './domain/dayMetrics'
 import {
   clearHabbitsData,
   loadHabbitsData,
@@ -16,15 +18,14 @@ type Tab = 'today' | 'calendar' | 'stats' | 'settings'
 
 const WATER = 3000
 const CAFFEINE = 400
-const TARGET = 6
 
 const habits = [
-  { id: 'english', name: 'Английский', sub: '10 минут', icon: 'A', points: 14 },
-  { id: 'chess', name: 'Шахматы', sub: '10 минут', icon: '♞', points: 14 },
-  { id: 'journal', name: 'Дневник', sub: 'Запись за день', icon: '▣', points: 14 },
-  { id: 'abstinence', name: 'Воздержание', sub: 'Каждый день', icon: '◎', points: 14 },
-  { id: 'book', name: 'Книга', sub: '20 минут', icon: '▤', points: 14 },
-  { id: 'video', name: 'Обучающее видео', sub: '15 минут', icon: '▶', points: 14 },
+  { id: 'english', name: 'Английский', sub: '10 минут', icon: 'A' },
+  { id: 'chess', name: 'Шахматы', sub: '10 минут', icon: '♞' },
+  { id: 'journal', name: 'Дневник', sub: 'Запись за день', icon: '▣' },
+  { id: 'abstinence', name: 'Воздержание', sub: 'Каждый день', icon: '◎' },
+  { id: 'book', name: 'Книга', sub: '20 минут', icon: '▤' },
+  { id: 'video', name: 'Обучающее видео', sub: '15 минут', icon: '▶' },
 ]
 
 const dkey = (d = new Date()) =>
@@ -114,30 +115,22 @@ export default function App() {
 
   const stats = (key: string) => {
     const day = state.days[key] ?? createDailyRecord(key)
-    const doneHabits = habits.filter((habit) => day.habits[habit.id]).length
-
-    return {
-      done: doneHabits + (day.hydration.waterMl >= WATER ? 1 : 0),
-      total: habits.length + 1,
-    }
+    return getDayMetrics(
+      day,
+      habits.map((habit) => habit.id),
+      WATER,
+    )
   }
 
   const todayStats = stats(tk)
 
-  const score = Math.min(
-    100,
-    habits.reduce(
-      (sum, habit) => sum + (today.habits[habit.id] ? habit.points : 0),
-      0,
-    ) +
-      Math.min(10, Math.round((today.hydration.waterMl / WATER) * 10)),
-  )
+  const score = todayStats.score
 
   const streak = useMemo(() => {
     let current = 0
     const date = new Date()
 
-    while (stats(dkey(date)).done >= TARGET) {
+    while (stats(dkey(date)).complete) {
       current++
       date.setDate(date.getDate() - 1)
     }
@@ -167,7 +160,7 @@ export default function App() {
 
     return {
       day: date.getDate(),
-      pct: (dayStats.done / dayStats.total) * 100,
+      pct: dayStats.checklistPercent,
       today: dkey(date) === tk,
     }
   })
@@ -182,7 +175,7 @@ export default function App() {
       label: new Intl.DateTimeFormat('ru-RU', {
         weekday: 'short',
       }).format(date),
-      pct: Math.round((dayStats.done / dayStats.total) * 100),
+      pct: dayStats.checklistPercent,
     }
   })
 
@@ -210,7 +203,7 @@ export default function App() {
         </div>
 
         <span className="pill">
-          {todayStats.done}/{todayStats.total}
+          {todayStats.checklistDone}/{todayStats.checklistTotal}
         </span>
       </header>
 
@@ -237,6 +230,11 @@ export default function App() {
               <i style={{ width: `${score}%` }} />
             </div>
           </section>
+
+          <h2 className="sectionTitle">Сводка дня</h2>
+          <DailyOverview day={today} />
+
+          <h2 className="sectionTitle">Привычки</h2>
 
           <section className="list">
             {habits.map((habit) => {

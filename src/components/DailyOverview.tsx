@@ -1,0 +1,82 @@
+import type { DailyRecord } from '../domain/dailyRecord'
+
+const formatDuration = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return `${hours} ч ${rest} мин`
+}
+
+export function DailyOverview({ day }: { day: DailyRecord }) {
+  const nutritionValue = day.nutrition?.caloriesKcal
+    ? `${Math.round(day.nutrition.caloriesKcal)} ккал`
+    : 'Нет данных'
+
+  const nutritionDetail = day.nutrition
+    ? [
+        day.nutrition.proteinG !== undefined
+          ? `Б ${Math.round(day.nutrition.proteinG)}`
+          : null,
+        day.nutrition.fatG !== undefined
+          ? `Ж ${Math.round(day.nutrition.fatG)}`
+          : null,
+        day.nutrition.carbsG !== undefined
+          ? `У ${Math.round(day.nutrition.carbsG)}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : ''
+
+  const sleepValue = day.sleep?.durationMinutes
+    ? formatDuration(day.sleep.durationMinutes)
+    : 'Нет данных'
+
+  const activityValue = day.activity?.steps
+    ? `${day.activity.steps.toLocaleString('ru-RU')} шагов`
+    : 'Нет данных'
+
+  const cards = [
+    {
+      icon: '🍽️',
+      title: 'Питание',
+      value: nutritionValue,
+      detail: nutritionDetail || 'FatSecret',
+      ready: Boolean(day.nutrition),
+    },
+    {
+      icon: '🌙',
+      title: 'Сон',
+      value: sleepValue,
+      detail:
+        day.sleep?.readiness !== undefined
+          ? `Готовность ${day.sleep.readiness}`
+          : 'Health / Fitbit',
+      ready: Boolean(day.sleep),
+    },
+    {
+      icon: '⚡',
+      title: 'Активность',
+      value: activityValue,
+      detail: day.activity?.activeCaloriesKcal
+        ? `${Math.round(day.activity.activeCaloriesKcal)} активных ккал`
+        : 'Health / Fitbit',
+      ready: Boolean(day.activity),
+    },
+  ]
+
+  return (
+    <section className="dailyOverview" aria-label="Сводка дня">
+      {cards.map((card) => (
+        <article
+          className={`summaryCard ${card.ready ? 'hasData' : ''}`}
+          key={card.title}
+        >
+          <span className="summaryIcon">{card.icon}</span>
+          <small>{card.title}</small>
+          <b>{card.value}</b>
+          <em>{card.detail}</em>
+        </article>
+      ))}
+    </section>
+  )
+}
