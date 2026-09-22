@@ -17,6 +17,15 @@ import {
 
 type Tab = 'today' | 'calendar' | 'stats' | 'settings'
 
+type FatSecretDailyNutrition = {
+  date: string
+  entries: number
+  caloriesKcal: number
+  proteinG: number
+  fatG: number
+  carbsG: number
+}
+
 const WATER = 3000
 const CAFFEINE = 400
 
@@ -91,6 +100,11 @@ export default function App() {
   const [state, setState] = useState<HabbitsData>(loadHabbitsData)
   const [tab, setTab] = useState<Tab>('today')
   const [editingNutrition, setEditingNutrition] = useState(false)
+  const [nutritionSyncing, setNutritionSyncing] = useState(false)
+  const [nutritionSyncMessage, setNutritionSyncMessage] = useState<
+    string | null
+  >(null)
+  const [nutritionSyncError, setNutritionSyncError] = useState(false)
 
   const tk = dkey()
   const today = state.days[tk] ?? createDailyRecord(tk)
@@ -127,6 +141,56 @@ export default function App() {
   const todayStats = stats(tk)
 
   const score = todayStats.score
+
+  const syncNutrition = async () => {
+    setNutritionSyncing(true)
+    setNutritionSyncMessage(null)
+    setNutritionSyncError(false)
+
+    try {
+      const response = await fetch(
+        `/api/fatsecret/daily?date=${encodeURIComponent(tk)}`,
+        { cache: 'no-store' },
+      )
+      const payload = (await response.json()) as
+        | FatSecretDailyNutrition
+        | { error?: string }
+
+      if (!response.ok || 'error' in payload) {
+        throw new Error(
+          'error' in payload && payload.error
+            ? payload.error
+            : 'Не удалось получить данные FatSecret',
+        )
+      }
+
+      const nutrition = payload as FatSecretDailyNutrition
+
+      update((day) => ({
+        ...day,
+        nutrition: {
+          caloriesKcal: nutrition.caloriesKcal,
+          proteinG: nutrition.proteinG,
+          fatG: nutrition.fatG,
+          carbsG: nutrition.carbsG,
+          source: {
+            provider: 'fatsecret',
+            syncedAt: new Date().toISOString(),
+          },
+        },
+      }))
+      setNutritionSyncMessage(
+        `FatSecret обновлён: ${nutrition.entries} записи`,
+      )
+    } catch (error) {
+      setNutritionSyncError(true)
+      setNutritionSyncMessage(
+        error instanceof Error ? error.message : 'Ошибка синхронизации',
+      )
+    } finally {
+      setNutritionSyncing(false)
+    }
+  }
 
   const streak = useMemo(() => {
     let current = 0
@@ -237,7 +301,18 @@ export default function App() {
           <DailyOverview
             day={today}
             onEditNutrition={() => setEditingNutrition(true)}
+            onSyncNutrition={syncNutrition}
+            syncingNutrition={nutritionSyncing}
           />
+
+          {nutritionSyncMessage && (
+            <p
+              className={`syncMessage ${nutritionSyncError ? 'syncError' : ''}`}
+              role={nutritionSyncError ? 'alert' : 'status'}
+            >
+              {nutritionSyncMessage}
+            </p>
+          )}
 
           {editingNutrition && (
             <NutritionEditor

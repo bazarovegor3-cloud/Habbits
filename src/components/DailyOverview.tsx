@@ -9,11 +9,15 @@ const formatDuration = (minutes: number) => {
 export function DailyOverview({
   day,
   onEditNutrition,
+  onSyncNutrition,
+  syncingNutrition,
 }: {
   day: DailyRecord
   onEditNutrition: () => void
+  onSyncNutrition: () => void
+  syncingNutrition: boolean
 }) {
-  const nutritionValue = day.nutrition?.caloriesKcal
+  const nutritionValue = day.nutrition?.caloriesKcal !== undefined
     ? `${Math.round(day.nutrition.caloriesKcal)} ккал`
     : 'Нет данных'
 
@@ -43,14 +47,6 @@ export function DailyOverview({
 
   const cards = [
     {
-      icon: '🍽️',
-      title: 'Питание',
-      value: nutritionValue,
-      detail: nutritionDetail || 'Заполнить вручную',
-      ready: Boolean(day.nutrition),
-      onClick: onEditNutrition,
-    },
-    {
       icon: '🌙',
       title: 'Сон',
       value: sleepValue,
@@ -59,7 +55,6 @@ export function DailyOverview({
           ? `Готовность ${day.sleep.readiness}`
           : 'Health / Fitbit',
       ready: Boolean(day.sleep),
-      onClick: undefined,
     },
     {
       icon: '⚡',
@@ -69,37 +64,49 @@ export function DailyOverview({
         ? `${Math.round(day.activity.activeCaloriesKcal)} активных ккал`
         : 'Health / Fitbit',
       ready: Boolean(day.activity),
-      onClick: undefined,
     },
   ]
 
   return (
     <section className="dailyOverview" aria-label="Сводка дня">
-      {cards.map((card) => {
-        const content = (
-          <>
-            <span className="summaryIcon">{card.icon}</span>
-            <small>{card.title}</small>
-            <b>{card.value}</b>
-            <em>{card.detail}</em>
-          </>
-        )
+      <article
+        className={`summaryCard nutritionCard ${day.nutrition ? 'hasData' : ''}`}
+      >
+        <span className="summaryIcon">🍽️</span>
+        <small>Питание</small>
+        <b>{nutritionValue}</b>
+        <em>{nutritionDetail || 'Нет данных за день'}</em>
 
-        return card.onClick ? (
+        <div className="summaryActions">
           <button
-            className={`summaryCard editable ${card.ready ? 'hasData' : ''}`}
-            key={card.title}
+            className="summarySync"
             type="button"
-            onClick={card.onClick}
+            onClick={onSyncNutrition}
+            disabled={syncingNutrition}
           >
-            {content}
+            {syncingNutrition ? 'Синхронизация…' : '↻ FatSecret'}
           </button>
-        ) : (
+          <button
+            className="summaryEdit"
+            type="button"
+            onClick={onEditNutrition}
+            aria-label="Изменить питание вручную"
+          >
+            ✎
+          </button>
+        </div>
+      </article>
+
+      {cards.map((card) => {
+        return (
           <article
             className={`summaryCard ${card.ready ? 'hasData' : ''}`}
             key={card.title}
           >
-            {content}
+            <span className="summaryIcon">{card.icon}</span>
+            <small>{card.title}</small>
+            <b>{card.value}</b>
+            <em>{card.detail}</em>
           </article>
         )
       })}
