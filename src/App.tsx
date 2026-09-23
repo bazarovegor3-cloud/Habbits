@@ -799,21 +799,33 @@ export default function App() {
               <b>{googleHealthMessage}</b>
               <span>Сон · шаги · калории сожжено</span>
             </div>
-            <button
-              type="button"
-              onClick={() =>
-                void (googleHealthConnected
-                  ? syncGoogleHealth()
-                  : connectGoogleHealth())
-              }
-              disabled={!cloudKey || googleHealthSyncing}
-            >
-              {googleHealthSyncing
-                ? 'Подождите…'
-                : googleHealthConnected
-                  ? 'Обновить'
-                  : 'Подключить'}
-            </button>
+            <div className="googleHealthActions">
+              <button
+                type="button"
+                onClick={() =>
+                  void (googleHealthConnected
+                    ? syncGoogleHealth()
+                    : connectGoogleHealth())
+                }
+                disabled={!cloudKey || googleHealthSyncing}
+              >
+                {googleHealthSyncing
+                  ? 'Подождите…'
+                  : googleHealthConnected
+                    ? 'Обновить'
+                    : 'Подключить'}
+              </button>
+              {googleHealthConnected && (
+                <button
+                  className="googleHealthReconnect"
+                  type="button"
+                  onClick={() => void connectGoogleHealth()}
+                  disabled={!cloudKey || googleHealthSyncing}
+                >
+                  Расширить доступ
+                </button>
+              )}
+            </div>
           </section>
 
           <button

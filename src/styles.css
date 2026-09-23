@@ -742,11 +742,18 @@ button {
   border-radius: 17px;
 }
 
-.googleHealthCard > div {
+.googleHealthCard > div:first-child {
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 4px;
+}
+
+.googleHealthActions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 7px;
 }
 
 .googleHealthCard small,
@@ -772,6 +779,13 @@ button {
 .googleHealthCard button:disabled {
   color: #94a3b8;
   background: #334155;
+}
+
+.googleHealthCard .googleHealthReconnect {
+  color: #67e8f9;
+  background: transparent;
+  border: 1px solid #155e75;
+  font-size: 11px;
 }
 
 .cloudConnect {
