@@ -5,8 +5,8 @@ type GoogleHealthDaily = {
   steps: number
   caloriesBurnedKcal: number
   sleepMinutes: number
-  sleepScore: number
-  readiness: number
+  sleepScore?: number
+  readiness?: number
   sleepStartAt?: string
   sleepEndAt?: string
   syncedAt: string

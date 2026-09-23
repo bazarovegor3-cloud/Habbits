@@ -25,16 +25,6 @@ export const parseGoogleHealthDaily = ({ date, steps, calories, sleep }) => {
       0,
     ),
   )
-  const sleepPeriodMinutes = sleepSessions.reduce(
-    (total, session) => total + number(session?.summary?.minutesInSleepPeriod),
-    0,
-  )
-  const sleepEfficiency = sleepPeriodMinutes
-    ? Math.min(100, Math.round((sleepMinutes / sleepPeriodMinutes) * 100))
-    : 0
-  const durationScore = Math.min(100, Math.round((sleepMinutes / 480) * 100))
-  const sleepScore = Math.round(durationScore * 0.7 + sleepEfficiency * 0.3)
-
   return {
     date,
     steps: Math.round(
@@ -45,8 +35,6 @@ export const parseGoogleHealthDaily = ({ date, steps, calories, sleep }) => {
       0,
     ),
     sleepMinutes,
-    sleepScore,
-    readiness: sleepScore,
     sleepStartAt: longestSleep?.interval?.startTime,
     sleepEndAt: longestSleep?.interval?.endTime,
     syncedAt: new Date().toISOString(),

@@ -80,7 +80,7 @@ export function DailyOverview({
             : day.sleep.readiness >= 60
               ? 'Средняя'
               : 'Низкая'
-          : 'Расчёт Habbits',
+          : 'Нет данных из Google Health',
       ready: hasSleep && day.sleep?.readiness !== undefined,
     },
   ]
