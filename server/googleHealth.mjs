@@ -176,7 +176,7 @@ export const fetchGoogleHealthDaily = async (date) => {
       { method: 'POST', body: rollupBody },
     ),
     googleFetch(
-      `https://health.googleapis.com/v4/users/me/dataTypes/sleep/dataPoints?${new URLSearchParams({
+      `https://health.googleapis.com/v4/users/me/dataTypes/sleep/dataPoints:reconcile?${new URLSearchParams({
         filter: `sleep.interval.civil_end_time >= "${date}" AND sleep.interval.civil_end_time < "${endDate}"`,
         pageSize: '25',
         dataSourceFamily: 'users/me/dataSourceFamilies/google-wearables',
