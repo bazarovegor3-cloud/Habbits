@@ -6,6 +6,7 @@ const TOKEN_PATH = 'habbits/google-health-tokens.json'
 export const GOOGLE_HEALTH_SCOPES = [
   'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly',
   'https://www.googleapis.com/auth/googlehealth.sleep.readonly',
+  'https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly',
 ]
 
 const requiredEnv = (name) => {
