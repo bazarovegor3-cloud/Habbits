@@ -189,6 +189,16 @@ export const fetchGoogleHealthDaily = async (date) => {
     throw results[0].reason
   }
 
+  const sourceNames = ['steps', 'active-calories', 'sleep']
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      console.warn(
+        `Google Health ${sourceNames[index]} sync failed:`,
+        result.reason instanceof Error ? result.reason.message : 'Unknown error',
+      )
+    }
+  })
+
   const [steps, calories, sleep] = results.map((result) =>
     result.status === 'fulfilled' ? result.value : null,
   )
