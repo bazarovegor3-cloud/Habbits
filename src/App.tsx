@@ -292,7 +292,19 @@ export default function App() {
       const daily = await getGoogleHealthDaily(tk, cloudKey)
       update((day) => ({ ...day, sleep: daily.sleep, activity: daily.activity }))
       setGoogleHealthConnected(true)
-      setGoogleHealthMessage('Сон и активность обновлены')
+      const hasSleep = Boolean(daily.sleep.durationMinutes)
+      const hasActivity = Boolean(
+        daily.activity.steps || daily.activity.activeCaloriesKcal,
+      )
+      setGoogleHealthMessage(
+        hasSleep && hasActivity
+          ? 'Сон и активность обновлены'
+          : hasSleep
+            ? 'Сон обновлён, активности пока нет'
+            : hasActivity
+              ? 'Активность обновлена, сон ещё не пришёл из Fitbit'
+              : 'Подключено, данных за сегодня пока нет',
+      )
     } catch (error) {
       setGoogleHealthMessage(
         error instanceof Error ? error.message : 'Ошибка Google Health',

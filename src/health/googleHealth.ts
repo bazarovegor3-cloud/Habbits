@@ -46,13 +46,14 @@ export const getGoogleHealthDaily = async (
     cloudKey,
   )
   const source = { provider: 'fitbit' as const, syncedAt: daily.syncedAt }
+  const hasSleep = daily.sleepMinutes > 0
   return {
     sleep: {
       durationMinutes: daily.sleepMinutes,
       startAt: daily.sleepStartAt,
       endAt: daily.sleepEndAt,
-      score: daily.sleepScore,
-      readiness: daily.readiness,
+      score: hasSleep ? daily.sleepScore : undefined,
+      readiness: hasSleep ? daily.readiness : undefined,
       source,
     },
     activity: {
