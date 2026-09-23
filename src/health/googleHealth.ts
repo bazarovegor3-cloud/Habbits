@@ -3,7 +3,7 @@ import type { ActivitySummary, SleepSummary } from '../domain/dailyRecord'
 type GoogleHealthDaily = {
   date: string
   steps: number
-  activeCaloriesKcal: number
+  caloriesBurnedKcal: number
   sleepMinutes: number
   sleepScore: number
   readiness: number
@@ -58,7 +58,7 @@ export const getGoogleHealthDaily = async (
     },
     activity: {
       steps: daily.steps,
-      activeCaloriesKcal: daily.activeCaloriesKcal,
+      caloriesBurnedKcal: daily.caloriesBurnedKcal,
       source,
     },
   }

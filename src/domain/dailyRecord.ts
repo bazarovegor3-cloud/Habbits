@@ -30,6 +30,8 @@ export type SleepSummary = {
 
 export type ActivitySummary = {
   steps?: number
+  caloriesBurnedKcal?: number
+  /** Legacy value kept for old synced records. */
   activeCaloriesKcal?: number
   workoutMinutes?: number
   source?: SourceInfo

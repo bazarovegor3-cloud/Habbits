@@ -7,7 +7,7 @@ test('maps Google Health daily totals into Habbits fields', () => {
     date: '2026-09-23',
     steps: { rollupDataPoints: [{ steps: { countSum: '4321' } }] },
     calories: {
-      rollupDataPoints: [{ activeEnergyBurned: { kcalSum: 321.5 } }],
+      rollupDataPoints: [{ totalCalories: { kcalSum: 2321.5 } }],
     },
     sleep: {
       dataPoints: [
@@ -23,7 +23,7 @@ test('maps Google Health daily totals into Habbits fields', () => {
   })
 
   assert.equal(result.steps, 4321)
-  assert.equal(result.activeCaloriesKcal, 321.5)
+  assert.equal(result.caloriesBurnedKcal, 2321.5)
   assert.equal(result.sleepMinutes, 450)
   assert.equal(result.sleepScore, 94)
   assert.equal(result.readiness, 94)
@@ -34,6 +34,6 @@ test('maps Google Health daily totals into Habbits fields', () => {
 test('returns zero summaries when Google Health has no data', () => {
   const result = parseGoogleHealthDaily({ date: '2026-09-23' })
   assert.equal(result.steps, 0)
-  assert.equal(result.activeCaloriesKcal, 0)
+  assert.equal(result.caloriesBurnedKcal, 0)
   assert.equal(result.sleepMinutes, 0)
 })

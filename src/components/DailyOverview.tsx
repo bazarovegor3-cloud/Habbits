@@ -61,8 +61,8 @@ export function DailyOverview({
       icon: '⚡',
       title: 'Активность',
       value: activityValue,
-      detail: day.activity?.activeCaloriesKcal
-        ? `${Math.round(day.activity.activeCaloriesKcal)} активных ккал`
+      detail: day.activity?.caloriesBurnedKcal
+        ? `${Math.round(day.activity.caloriesBurnedKcal)} ккал сожжено`
         : 'Health / Fitbit',
       ready: Boolean(day.activity),
     },

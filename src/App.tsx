@@ -294,7 +294,7 @@ export default function App() {
       setGoogleHealthConnected(true)
       const hasSleep = Boolean(daily.sleep.durationMinutes)
       const hasActivity = Boolean(
-        daily.activity.steps || daily.activity.activeCaloriesKcal,
+        daily.activity.steps || daily.activity.caloriesBurnedKcal,
       )
       setGoogleHealthMessage(
         hasSleep && hasActivity

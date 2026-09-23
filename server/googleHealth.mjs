@@ -171,7 +171,7 @@ export const fetchGoogleHealthDaily = async (date) => {
       { method: 'POST', body: rollupBody },
     ),
     googleFetch(
-      'https://health.googleapis.com/v4/users/me/dataTypes/active-energy-burned/dataPoints:dailyRollUp',
+      'https://health.googleapis.com/v4/users/me/dataTypes/total-calories/dataPoints:dailyRollUp',
       token,
       { method: 'POST', body: rollupBody },
     ),
@@ -189,7 +189,7 @@ export const fetchGoogleHealthDaily = async (date) => {
     throw results[0].reason
   }
 
-  const sourceNames = ['steps', 'active-calories', 'sleep']
+  const sourceNames = ['steps', 'total-calories', 'sleep']
   results.forEach((result, index) => {
     if (result.status === 'rejected') {
       console.warn(

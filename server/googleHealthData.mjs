@@ -40,8 +40,8 @@ export const parseGoogleHealthDaily = ({ date, steps, calories, sleep }) => {
     steps: Math.round(
       stepPoints.reduce((total, point) => total + number(point?.steps?.countSum), 0),
     ),
-    activeCaloriesKcal: caloriePoints.reduce(
-      (total, point) => total + number(point?.activeEnergyBurned?.kcalSum),
+    caloriesBurnedKcal: caloriePoints.reduce(
+      (total, point) => total + number(point?.totalCalories?.kcalSum),
       0,
     ),
     sleepMinutes,
