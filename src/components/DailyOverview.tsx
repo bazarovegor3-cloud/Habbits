@@ -45,6 +45,23 @@ export function DailyOverview({
     ? `${day.activity.steps.toLocaleString('ru-RU')} шагов`
     : 'Нет данных'
   const hasSleep = Boolean(day.sleep?.durationMinutes)
+  const readinessDetail = [
+    day.sleep?.readiness !== undefined
+      ? day.sleep.readiness >= 80
+        ? 'Высокая'
+        : day.sleep.readiness >= 60
+          ? 'Средняя'
+          : 'Низкая'
+      : null,
+    day.sleep?.hrvMs !== undefined
+      ? `HRV ${Math.round(day.sleep.hrvMs)} мс`
+      : null,
+    day.sleep?.restingHeartRateBpm !== undefined
+      ? `пульс ${Math.round(day.sleep.restingHeartRateBpm)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   const cards = [
     {
@@ -75,12 +92,8 @@ export function DailyOverview({
           : 'Нет данных',
       detail:
         hasSleep && day.sleep?.readiness !== undefined
-          ? day.sleep.readiness >= 80
-            ? 'Высокая'
-            : day.sleep.readiness >= 60
-              ? 'Средняя'
-              : 'Низкая'
-          : 'Нет данных из Google Health',
+          ? readinessDetail
+          : 'Нужны HRV/пульс и минимум 3 дня истории',
       ready: hasSleep && day.sleep?.readiness !== undefined,
     },
   ]

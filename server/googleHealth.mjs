@@ -133,6 +133,12 @@ const nextDate = (date) => {
   return value.toISOString().slice(0, 10)
 }
 
+const previousDate = (date, days) => {
+  const value = new Date(`${date}T12:00:00Z`)
+  value.setUTCDate(value.getUTCDate() - days)
+  return value.toISOString().slice(0, 10)
+}
+
 const googleFetch = async (url, token, init) => {
   const retryableStatuses = new Set([429, 500, 502, 503, 504])
 
@@ -159,6 +165,7 @@ const googleFetch = async (url, token, init) => {
 export const fetchGoogleHealthDaily = async (date) => {
   const token = await accessToken()
   const endDate = nextDate(date)
+  const baselineStartDate = previousDate(date, 14)
   const rollupBody = JSON.stringify({
     range: { start: civilDate(date), end: civilDate(endDate) },
     windowSizeDays: 1,
@@ -184,13 +191,35 @@ export const fetchGoogleHealthDaily = async (date) => {
       })}`,
       token,
     ),
+    googleFetch(
+      `https://health.googleapis.com/v4/users/me/dataTypes/daily-heart-rate-variability/dataPoints:reconcile?${new URLSearchParams({
+        filter: `daily_heart_rate_variability.date >= "${baselineStartDate}" AND daily_heart_rate_variability.date < "${endDate}"`,
+        pageSize: '100',
+        dataSourceFamily: 'users/me/dataSourceFamilies/google-wearables',
+      })}`,
+      token,
+    ),
+    googleFetch(
+      `https://health.googleapis.com/v4/users/me/dataTypes/daily-resting-heart-rate/dataPoints:reconcile?${new URLSearchParams({
+        filter: `daily_resting_heart_rate.date >= "${baselineStartDate}" AND daily_resting_heart_rate.date < "${endDate}"`,
+        pageSize: '100',
+        dataSourceFamily: 'users/me/dataSourceFamilies/google-wearables',
+      })}`,
+      token,
+    ),
   ])
 
   if (results.every((result) => result.status === 'rejected')) {
     throw results[0].reason
   }
 
-  const sourceNames = ['steps', 'total-calories', 'sleep']
+  const sourceNames = [
+    'steps',
+    'total-calories',
+    'sleep',
+    'daily-heart-rate-variability',
+    'daily-resting-heart-rate',
+  ]
   results.forEach((result, index) => {
     if (result.status === 'rejected') {
       console.warn(
@@ -200,10 +229,18 @@ export const fetchGoogleHealthDaily = async (date) => {
     }
   })
 
-  const [steps, calories, sleep] = results.map((result) =>
-    result.status === 'fulfilled' ? result.value : null,
-  )
-  return parseGoogleHealthDaily({ date, steps, calories, sleep })
+  const [steps, calories, sleep, heartRateVariability, restingHeartRate] =
+    results.map((result) =>
+      result.status === 'fulfilled' ? result.value : null,
+    )
+  return parseGoogleHealthDaily({
+    date,
+    steps,
+    calories,
+    sleep,
+    heartRateVariability,
+    restingHeartRate,
+  })
 }
 
 export const googleHealthAuthorizationUrl = ({ redirectUri, state }) => {

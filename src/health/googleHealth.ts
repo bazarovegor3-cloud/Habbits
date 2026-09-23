@@ -7,6 +7,8 @@ type GoogleHealthDaily = {
   sleepMinutes: number
   sleepScore?: number
   readiness?: number
+  hrvMs?: number
+  restingHeartRateBpm?: number
   sleepStartAt?: string
   sleepEndAt?: string
   syncedAt: string
@@ -54,6 +56,8 @@ export const getGoogleHealthDaily = async (
       endAt: daily.sleepEndAt,
       score: hasSleep ? daily.sleepScore : undefined,
       readiness: hasSleep ? daily.readiness : undefined,
+      hrvMs: daily.hrvMs,
+      restingHeartRateBpm: daily.restingHeartRateBpm,
       source,
     },
     activity: {

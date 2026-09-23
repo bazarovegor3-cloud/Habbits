@@ -25,6 +25,8 @@ export type SleepSummary = {
   endAt?: string
   score?: number
   readiness?: number
+  hrvMs?: number
+  restingHeartRateBpm?: number
   source?: SourceInfo
 }
 

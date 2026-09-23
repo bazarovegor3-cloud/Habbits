@@ -37,3 +37,66 @@ test('returns zero summaries when Google Health has no data', () => {
   assert.equal(result.caloriesBurnedKcal, 0)
   assert.equal(result.sleepMinutes, 0)
 })
+
+test('calculates a personal readiness score from sleep, HRV, and resting heart rate', () => {
+  const dailyPoint = (date, field, value) => {
+    const [year, month, day] = date.split('-').map(Number)
+    return { [field]: { date: { year, month, day }, ...value } }
+  }
+  const result = parseGoogleHealthDaily({
+    date: '2026-09-23',
+    sleep: {
+      dataPoints: [{ sleep: { summary: { minutesAsleep: 420 } } }],
+    },
+    heartRateVariability: {
+      dataPoints: [
+        dailyPoint('2026-09-20', 'dailyHeartRateVariability', {
+          averageHeartRateVariabilityMilliseconds: 45,
+        }),
+        dailyPoint('2026-09-21', 'dailyHeartRateVariability', {
+          averageHeartRateVariabilityMilliseconds: 50,
+        }),
+        dailyPoint('2026-09-22', 'dailyHeartRateVariability', {
+          averageHeartRateVariabilityMilliseconds: 55,
+        }),
+        dailyPoint('2026-09-23', 'dailyHeartRateVariability', {
+          averageHeartRateVariabilityMilliseconds: 60,
+        }),
+      ],
+    },
+    restingHeartRate: {
+      dataPoints: [
+        dailyPoint('2026-09-20', 'dailyRestingHeartRate', { beatsPerMinute: 62 }),
+        dailyPoint('2026-09-21', 'dailyRestingHeartRate', { beatsPerMinute: 60 }),
+        dailyPoint('2026-09-22', 'dailyRestingHeartRate', { beatsPerMinute: 61 }),
+        dailyPoint('2026-09-23', 'dailyRestingHeartRate', { beatsPerMinute: 58 }),
+      ],
+    },
+  })
+
+  assert.equal(result.hrvMs, 60)
+  assert.equal(result.restingHeartRateBpm, 58)
+  assert.equal(result.readiness, 88)
+})
+
+test('does not invent readiness before a personal baseline exists', () => {
+  const result = parseGoogleHealthDaily({
+    date: '2026-09-23',
+    sleep: {
+      dataPoints: [{ sleep: { summary: { minutesAsleep: 420 } } }],
+    },
+    heartRateVariability: {
+      dataPoints: [
+        {
+          dailyHeartRateVariability: {
+            date: { year: 2026, month: 9, day: 23 },
+            averageHeartRateVariabilityMilliseconds: 60,
+          },
+        },
+      ],
+    },
+  })
+
+  assert.equal(result.hrvMs, 60)
+  assert.equal(result.readiness, undefined)
+})
