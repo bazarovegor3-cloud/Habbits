@@ -185,6 +185,18 @@ export default function App() {
     }
   }, [cloudKey])
 
+  useEffect(() => {
+    if (!cloudKey) return
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void runCloudSync(stateRef.current, cloudKey)
+      }
+    }, 5000)
+
+    return () => window.clearInterval(interval)
+  }, [cloudKey])
+
   const update = (fn: (d: DailyRecord) => DailyRecord) =>
     setState((previous) => {
       const next = {
