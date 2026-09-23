@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  loadCloudKey,
+  saveCloudKey,
+  syncCloudData,
+} from './cloud/habbitsCloud'
 import { DailyOverview } from './components/DailyOverview'
 import { NutritionEditor } from './components/NutritionEditor'
 import {
@@ -16,6 +21,7 @@ import {
 } from './storage/habbitsStorage'
 
 type Tab = 'today' | 'calendar' | 'stats' | 'settings'
+type CloudStatus = 'off' | 'syncing' | 'synced' | 'error'
 
 type FatSecretDailyNutrition = {
   date: string
@@ -105,13 +111,79 @@ export default function App() {
     string | null
   >(null)
   const [nutritionSyncError, setNutritionSyncError] = useState(false)
+  const [cloudKey, setCloudKey] = useState(loadCloudKey)
+  const [cloudKeyDraft, setCloudKeyDraft] = useState(loadCloudKey)
+  const [cloudStatus, setCloudStatus] = useState<CloudStatus>(
+    cloudKey ? 'syncing' : 'off',
+  )
+  const [cloudMessage, setCloudMessage] = useState(
+    cloudKey ? 'Подключаем облако…' : 'Облако не подключено',
+  )
+  const stateRef = useRef(state)
+  const cloudRequestRef = useRef(0)
 
   const tk = dkey()
   const today = state.days[tk] ?? createDailyRecord(tk)
 
   useEffect(() => {
+    stateRef.current = state
     saveHabbitsData(state)
   }, [state])
+
+  const applyCloudResult = (data: HabbitsData) => {
+    setState((current) => {
+      if (JSON.stringify(current) === JSON.stringify(data)) return current
+      return data
+    })
+  }
+
+  const runCloudSync = async (data: HabbitsData, key: string) => {
+    const requestId = ++cloudRequestRef.current
+    setCloudStatus('syncing')
+    setCloudMessage('Синхронизация…')
+
+    try {
+      const merged = await syncCloudData(data, key)
+      if (requestId !== cloudRequestRef.current) return
+      applyCloudResult(merged)
+      setCloudStatus('synced')
+      setCloudMessage('Все устройства синхронизированы')
+    } catch (error) {
+      if (requestId !== cloudRequestRef.current) return
+      setCloudStatus('error')
+      setCloudMessage(
+        error instanceof Error ? error.message : 'Ошибка синхронизации',
+      )
+    }
+  }
+
+  useEffect(() => {
+    if (!cloudKey) return
+
+    const timer = window.setTimeout(() => {
+      void runCloudSync(state, cloudKey)
+    }, 800)
+
+    return () => window.clearTimeout(timer)
+  }, [state, cloudKey])
+
+  useEffect(() => {
+    if (!cloudKey) return
+
+    const syncWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void runCloudSync(stateRef.current, cloudKey)
+      }
+    }
+
+    window.addEventListener('focus', syncWhenVisible)
+    document.addEventListener('visibilitychange', syncWhenVisible)
+
+    return () => {
+      window.removeEventListener('focus', syncWhenVisible)
+      document.removeEventListener('visibilitychange', syncWhenVisible)
+    }
+  }, [cloudKey])
 
   const update = (fn: (d: DailyRecord) => DailyRecord) =>
     setState((previous) => {
@@ -549,7 +621,77 @@ export default function App() {
       {tab === 'settings' && (
         <section className="panel">
           <h2>Habbits v0.2.1</h2>
-          <p>Данные сохраняются на этом устройстве.</p>
+          <p>
+            {cloudKey
+              ? 'Данные сохраняются на устройстве и в приватном облаке.'
+              : 'Данные сохраняются только на этом устройстве.'}
+          </p>
+
+          <section className={`cloudCard ${cloudStatus}`}>
+            <div className="cloudHeading">
+              <div>
+                <small>☁️ Облачная синхронизация</small>
+                <b>{cloudMessage}</b>
+              </div>
+              <span aria-hidden="true" />
+            </div>
+
+            {!cloudKey ? (
+              <form
+                className="cloudConnect"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  const nextKey = cloudKeyDraft.trim()
+                  if (nextKey.length < 10) {
+                    setCloudStatus('error')
+                    setCloudMessage('Код должен быть не короче 10 символов')
+                    return
+                  }
+
+                  saveCloudKey(nextKey)
+                  setCloudKey(nextKey)
+                  setCloudStatus('syncing')
+                  setCloudMessage('Подключаем облако…')
+                }}
+              >
+                <label htmlFor="cloud-key">Код облака</label>
+                <div>
+                  <input
+                    id="cloud-key"
+                    type="password"
+                    value={cloudKeyDraft}
+                    onChange={(event) => setCloudKeyDraft(event.target.value)}
+                    placeholder="Введите общий код"
+                    autoComplete="off"
+                  />
+                  <button type="submit">Подключить</button>
+                </div>
+                <small>Один и тот же код вводится на Mac и iPhone.</small>
+              </form>
+            ) : (
+              <div className="cloudActions">
+                <button
+                  type="button"
+                  onClick={() => void runCloudSync(stateRef.current, cloudKey)}
+                  disabled={cloudStatus === 'syncing'}
+                >
+                  Синхронизировать сейчас
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveCloudKey('')
+                    setCloudKey('')
+                    setCloudKeyDraft('')
+                    setCloudStatus('off')
+                    setCloudMessage('Облако не подключено')
+                  }}
+                >
+                  Отключить на этом устройстве
+                </button>
+              </div>
+            )}
+          </section>
 
           <button
             className="backup"

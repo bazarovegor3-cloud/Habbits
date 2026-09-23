@@ -669,6 +669,118 @@ button {
   color: var(--muted);
 }
 
+.cloudCard {
+  margin: 18px 0;
+  padding: 15px;
+  background: #0b1526;
+  border: 1px solid #334155;
+  border-radius: 17px;
+}
+
+.cloudCard.synced {
+  border-color: #166534;
+}
+
+.cloudCard.error {
+  border-color: #7f1d1d;
+}
+
+.cloudHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cloudHeading div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cloudHeading small,
+.cloudConnect label,
+.cloudConnect > small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.cloudHeading b {
+  font-size: 14px;
+}
+
+.cloudHeading > span {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  background: #64748b;
+  border-radius: 50%;
+}
+
+.cloudCard.syncing .cloudHeading > span {
+  background: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+.cloudCard.synced .cloudHeading > span {
+  background: #22c55e;
+}
+
+.cloudCard.error .cloudHeading > span {
+  background: #ef4444;
+}
+
+.cloudConnect {
+  margin-top: 13px;
+}
+
+.cloudConnect > div {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.cloudConnect input {
+  min-width: 0;
+  flex: 1;
+  padding: 11px;
+  color: #fff;
+  background: #070d18;
+  border: 1px solid #334155;
+  border-radius: 11px;
+  outline: none;
+}
+
+.cloudConnect input:focus {
+  border-color: #38bdf8;
+}
+
+.cloudConnect button,
+.cloudActions button {
+  padding: 10px 12px;
+  color: #dbeafe;
+  background: #123047;
+  border: 1px solid #1d6087;
+  border-radius: 11px;
+}
+
+.cloudActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.cloudActions button:last-child {
+  color: var(--muted);
+  background: transparent;
+  border-color: #334155;
+}
+
+.cloudActions button:disabled {
+  opacity: 0.6;
+}
+
 .backup,
 .danger {
   width: 100%;
