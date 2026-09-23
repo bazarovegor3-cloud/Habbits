@@ -797,7 +797,7 @@ export default function App() {
             <div>
               <small>⌁ Google Health · Fitbit</small>
               <b>{googleHealthMessage}</b>
-              <span>Сон · шаги · активные калории</span>
+              <span>Сон · шаги · калории сожжено</span>
             </div>
             <button
               type="button"
