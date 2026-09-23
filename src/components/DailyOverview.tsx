@@ -51,8 +51,8 @@ export function DailyOverview({
       title: 'Сон',
       value: sleepValue,
       detail:
-        day.sleep?.readiness !== undefined
-          ? `Готовность ${day.sleep.readiness}`
+        day.sleep?.score !== undefined
+          ? `Оценка сна ${day.sleep.score}/100`
           : 'Health / Fitbit',
       ready: Boolean(day.sleep),
     },
@@ -64,6 +64,23 @@ export function DailyOverview({
         ? `${Math.round(day.activity.activeCaloriesKcal)} активных ккал`
         : 'Health / Fitbit',
       ready: Boolean(day.activity),
+    },
+    {
+      icon: '🔋',
+      title: 'Готовность',
+      value:
+        day.sleep?.readiness !== undefined
+          ? `${day.sleep.readiness}/100`
+          : 'Нет данных',
+      detail:
+        day.sleep?.readiness !== undefined
+          ? day.sleep.readiness >= 80
+            ? 'Высокая'
+            : day.sleep.readiness >= 60
+              ? 'Средняя'
+              : 'Низкая'
+          : 'Расчёт Habbits',
+      ready: day.sleep?.readiness !== undefined,
     },
   ]
 

@@ -23,6 +23,7 @@ export type SleepSummary = {
   durationMinutes?: number
   startAt?: string
   endAt?: string
+  score?: number
   readiness?: number
   source?: SourceInfo
 }

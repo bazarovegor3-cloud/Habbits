@@ -14,6 +14,11 @@ import {
 } from './domain/dailyRecord'
 import { getDayMetrics } from './domain/dayMetrics'
 import {
+  getGoogleHealthDaily,
+  getGoogleHealthStatus,
+  startGoogleHealthConnection,
+} from './health/googleHealth'
+import {
   clearHabbitsData,
   loadHabbitsData,
   saveHabbitsData,
@@ -119,6 +124,11 @@ export default function App() {
   const [cloudMessage, setCloudMessage] = useState(
     cloudKey ? 'Подключаем облако…' : 'Облако не подключено',
   )
+  const [googleHealthConnected, setGoogleHealthConnected] = useState(false)
+  const [googleHealthSyncing, setGoogleHealthSyncing] = useState(false)
+  const [googleHealthMessage, setGoogleHealthMessage] = useState(
+    'Проверяем подключение…',
+  )
   const stateRef = useRef(state)
   const cloudRequestRef = useRef(0)
 
@@ -186,6 +196,39 @@ export default function App() {
   }, [cloudKey])
 
   useEffect(() => {
+    if (!cloudKey) {
+      setGoogleHealthConnected(false)
+      setGoogleHealthMessage('Сначала подключите приватное облако')
+      return
+    }
+
+    let active = true
+    void getGoogleHealthStatus(cloudKey)
+      .then(({ connected }) => {
+        if (!active) return
+        setGoogleHealthConnected(connected)
+        setGoogleHealthMessage(
+          connected ? 'Fitbit подключён через Google Health' : 'Не подключён',
+        )
+      })
+      .catch((error) => {
+        if (!active) return
+        setGoogleHealthMessage(
+          error instanceof Error ? error.message : 'Не удалось проверить подключение',
+        )
+      })
+
+    if (new URLSearchParams(window.location.search).get('googleHealth') === 'connected') {
+      setTab('settings')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
+    return () => {
+      active = false
+    }
+  }, [cloudKey])
+
+  useEffect(() => {
     if (!cloudKey) return
 
     const interval = window.setInterval(() => {
@@ -225,6 +268,39 @@ export default function App() {
   const todayStats = stats(tk)
 
   const score = todayStats.score
+
+  const connectGoogleHealth = async () => {
+    if (!cloudKey) return
+    setGoogleHealthSyncing(true)
+    setGoogleHealthMessage('Открываем вход Google…')
+    try {
+      const { url } = await startGoogleHealthConnection(cloudKey)
+      window.location.assign(url)
+    } catch (error) {
+      setGoogleHealthMessage(
+        error instanceof Error ? error.message : 'Не удалось начать подключение',
+      )
+      setGoogleHealthSyncing(false)
+    }
+  }
+
+  const syncGoogleHealth = async () => {
+    if (!cloudKey) return
+    setGoogleHealthSyncing(true)
+    setGoogleHealthMessage('Получаем сон и активность…')
+    try {
+      const daily = await getGoogleHealthDaily(tk, cloudKey)
+      update((day) => ({ ...day, sleep: daily.sleep, activity: daily.activity }))
+      setGoogleHealthConnected(true)
+      setGoogleHealthMessage('Сон и активность обновлены')
+    } catch (error) {
+      setGoogleHealthMessage(
+        error instanceof Error ? error.message : 'Ошибка Google Health',
+      )
+    } finally {
+      setGoogleHealthSyncing(false)
+    }
+  }
 
   const syncNutrition = async () => {
     setNutritionSyncing(true)
@@ -703,6 +779,29 @@ export default function App() {
                 </button>
               </div>
             )}
+          </section>
+
+          <section className="googleHealthCard">
+            <div>
+              <small>⌁ Google Health · Fitbit</small>
+              <b>{googleHealthMessage}</b>
+              <span>Сон · шаги · активные калории</span>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                void (googleHealthConnected
+                  ? syncGoogleHealth()
+                  : connectGoogleHealth())
+              }
+              disabled={!cloudKey || googleHealthSyncing}
+            >
+              {googleHealthSyncing
+                ? 'Подождите…'
+                : googleHealthConnected
+                  ? 'Обновить'
+                  : 'Подключить'}
+            </button>
           </section>
 
           <button
