@@ -63,7 +63,7 @@ export const verifyOAuthState = (state) => {
 }
 
 const readTokens = async () => {
-  const result = await get(TOKEN_PATH, { access: 'private' })
+  const result = await get(TOKEN_PATH, { access: 'private', useCache: false })
   if (!result || result.statusCode !== 200 || !result.stream) return null
   return JSON.parse(await new Response(result.stream).text())
 }
@@ -133,19 +133,26 @@ const nextDate = (date) => {
 }
 
 const googleFetch = async (url, token, init) => {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-    },
-  })
-  const payload = await response.json()
-  if (!response.ok) {
-    throw new Error(payload?.error?.message ?? 'Google Health request failed')
+  const retryableStatuses = new Set([429, 500, 502, 503, 504])
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetch(url, {
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      },
+    })
+    const payload = await response.json()
+    if (response.ok) return payload
+
+    if (!retryableStatuses.has(response.status) || attempt === 2) {
+      throw new Error(payload?.error?.message ?? 'Google Health request failed')
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 300 * 3 ** attempt))
   }
-  return payload
 }
 
 export const fetchGoogleHealthDaily = async (date) => {
@@ -154,10 +161,10 @@ export const fetchGoogleHealthDaily = async (date) => {
   const rollupBody = JSON.stringify({
     range: { start: civilDate(date), end: civilDate(endDate) },
     windowSizeDays: 1,
-    dataSourceFamily: 'users/me/dataSourceFamilies/google-sources',
+    dataSourceFamily: 'users/me/dataSourceFamilies/google-wearables',
   })
 
-  const [steps, calories, sleep] = await Promise.all([
+  const results = await Promise.allSettled([
     googleFetch(
       'https://health.googleapis.com/v4/users/me/dataTypes/steps/dataPoints:dailyRollUp',
       token,
@@ -172,11 +179,19 @@ export const fetchGoogleHealthDaily = async (date) => {
       `https://health.googleapis.com/v4/users/me/dataTypes/sleep/dataPoints?${new URLSearchParams({
         filter: `sleep.interval.civil_end_time >= "${date}" AND sleep.interval.civil_end_time < "${endDate}"`,
         pageSize: '25',
+        dataSourceFamily: 'users/me/dataSourceFamilies/google-wearables',
       })}`,
       token,
     ),
   ])
 
+  if (results.every((result) => result.status === 'rejected')) {
+    throw results[0].reason
+  }
+
+  const [steps, calories, sleep] = results.map((result) =>
+    result.status === 'fulfilled' ? result.value : null,
+  )
   return parseGoogleHealthDaily({ date, steps, calories, sleep })
 }
 
